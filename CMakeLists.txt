@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(untitled)
+project(Genetic_Algorithm_TSP)
 
 enable_testing()
 
@@ -9,5 +9,5 @@ set(CMAKE_CXX_STANDARD 17)
 
 set(ALL_FILES ${ENTITY_FILES} main.cpp)
 
-add_executable(untitled ${ALL_FILES})
-target_link_libraries(untitled chormosomes)
+add_executable(${PROJECT_NAME} ${ALL_FILES})
+target_link_libraries(${PROJECT_NAME} chormosomes)

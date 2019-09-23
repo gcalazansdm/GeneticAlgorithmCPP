@@ -13,7 +13,8 @@ class GenesPool {
 private:
     std::vector<Chromosome> pool;
     void tryMutate(Chromosome& chromosome);
-    std::vector<Chromosome> selectGenes(int numElements, std::vector<Chromosome> elems );
+    void mutatetoAdd(std::vector<Chromosome>& elems,Chromosome& chromosome);
+    std::vector<Chromosome> selectGenes(int numElements, std::vector<Chromosome>& elems );
     void performCrossover(Chromosome& childA,Chromosome& childB,const Chromosome& fatherA,const Chromosome& fatherB);
 public:
     GenesPool(){
@@ -21,8 +22,8 @@ public:
         int population_ = constants->getPopulation();
 
         for (int i = 0; i < population_; ++i) {
-            Chromosome tempChromosome;
-            this->pool.push_back(tempChromosome);
+            Chromosome tempChromosome = Chromosome();
+            mutatetoAdd(this->pool,tempChromosome);
         }
     }
     void run();

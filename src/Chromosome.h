@@ -22,23 +22,25 @@ public:
     }
     Chromosome(const Chromosome& ref){
         this->fitness = (ref.fitness);
-        this->genes = (ref.genes);
+        this->genes = ref.genes;
     }
     float getFitness(){
         return this->fitness;
     }
 
-    const std::string getGenes(){
+    const std::string getGenes()const {
         char path[20];
         std::string rValue = "";
-        for (int i = 0; i < this->genes.size(); ++i) {
-            sprintf(path,"%d -> ",genes[i]+1);
-            rValue += path;
+        if(this->genes.size() > 0){
+            for (int i = 0; i < this->genes.size(); ++i) {
+                sprintf(path,"%d -> ",genes[i]+1);
+                rValue += path;
+            }
+            rValue.pop_back();
+            rValue.pop_back();
+            rValue.pop_back();
+            rValue.pop_back();
         }
-        rValue.pop_back();
-        rValue.pop_back();
-        rValue.pop_back();
-        rValue.pop_back();
         return rValue;
     }
 
@@ -60,15 +62,19 @@ public:
 
     Chromosome& operator=(const Chromosome& other) // copy assignment
     {
-        if (this != &other) { // self-assignment check expected
-            this->fitness = (other.fitness);
-            this->genes = (other.genes);
-        }
+        this->fitness = (other.fitness);
+        this->genes = (other.genes);
         return *this;
     }
 
-    bool operator==(const Chromosome& ref){ return this->fitness == ref.fitness; }
-    bool operator!=(const Chromosome& ref){ return this->fitness != ref.fitness; }
+    bool operator==(const Chromosome& ref){
+        bool isEquals = this->genes.size() == ref.genes.size();
+        for(int i = 0 ; i < this->genes.size() && isEquals; i++ ){
+            isEquals &= this->genes[i] == ref.genes[i];
+        }
+        return isEquals;
+    }
+    bool operator!=(const Chromosome& ref){ return !(*this == ref); }
 
     bool operator< (const Chromosome& ref){ return this->fitness > ref.fitness; }
     bool operator> (const Chromosome& ref){ return this->fitness < ref.fitness; }

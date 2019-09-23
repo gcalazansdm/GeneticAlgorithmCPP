@@ -1,8 +1,8 @@
 numOfGenes 52
-population 30
-numElems 500
-num_Epochs_Not_Changing 500
+population 100
+numElems 2
+num_Epochs_Not_Changing 100000
 mutationRate 0.10
 crossoverType 1
-selectionType 1
+selectionType 0
 /home/calazans/Documents/projects/01/build/cities.txt

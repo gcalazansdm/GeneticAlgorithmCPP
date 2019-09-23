@@ -3,6 +3,7 @@
 #include "Fitness.h"
 #include "Constants.h"
 #include <vector>
+#include <cassert>
 
 #define EXISTS 1
 #define DOES_NOT_EXISTS 0
@@ -22,6 +23,7 @@ void Chromosome::mutation(){
         this->genes[posB] = this->genes[posA];
         this->genes[posA] = tempGen;
     }
+    this->calculateFitness();
 }
 
 void Chromosome::randomGen(){
@@ -42,7 +44,6 @@ void Chromosome::randomGen(){
 }
 
 std::vector<char> Chromosome::crossover_remove(int posCut){
-    printf("%d %d\n",posCut,this->genes.size());
     return this->crossover_remove(posCut,this->genes.size());
 }
 std::vector<char> Chromosome::crossover_remove(int iniPosCut,int endPosCut){
@@ -70,36 +71,34 @@ void Chromosome::crossover_add(int posCut,const std::vector<char>& elems){
 void Chromosome::fixChromosome(void){
     auto constants =  ConstMethods::getConstants();
     size_t numOfGenes = constants->getGenes();
+    assert(numOfGenes > 0 && numOfGenes < 10000);
+    int numOfDuplicates = 0;
 
-    if(!this->genes.empty()){
-        char possibleNumbers[numOfGenes];
+    char possibleNumbers[numOfGenes];
 
-        for (int k = 0; k < numOfGenes; ++k) {
-            possibleNumbers[k] = DOES_NOT_EXISTS;
+    for (int k = 0; k < numOfGenes; ++k) {
+        possibleNumbers[k] = DOES_NOT_EXISTS;
+    }
+
+    int posDuplicate[numOfGenes];
+    int pos;
+
+    for (int i = 0; i < numOfGenes; ++i) {
+        pos = this->genes[i];
+        if(possibleNumbers[pos] == DOES_NOT_EXISTS){
+            possibleNumbers[pos] = EXISTS;
         }
-
-        std::vector<int> posDuplicate;
-        posDuplicate.reserve(numOfGenes);
-        int pos;
-
-        for (int i = 0; i < numOfGenes; ++i) {
-            pos = this->genes[i];
-            if(possibleNumbers[pos] == DOES_NOT_EXISTS){
-                possibleNumbers[pos] = EXISTS;
-            }
-            else{
-                posDuplicate.push_back(i);
-            }
+        else{
+            posDuplicate[numOfDuplicates] = i;
+            numOfDuplicates++;
         }
-        for (int j = 0; j < numOfGenes && !posDuplicate.empty(); ++j) {
-            if(possibleNumbers[j] == DOES_NOT_EXISTS){
-                pos = posDuplicate[0];
-                posDuplicate.pop_back();
-                this->genes[pos] = j;
-            }
+    }
+    for (int j = 0; j < numOfGenes && numOfDuplicates > 0; ++j) {
+        if(possibleNumbers[j] == DOES_NOT_EXISTS){
+            numOfDuplicates--;
+            pos = posDuplicate[numOfDuplicates];
+            this->genes[pos] = j;
         }
-    } else{
-printf("deu bosque\n");
     }
 }
 

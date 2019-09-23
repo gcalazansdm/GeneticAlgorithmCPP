@@ -1,10 +1,17 @@
 #include "src/Chromosome.h"
 #include "src/GenesPool.h"
 
-int main() {
-
+int main(int argc, char *argv[]) {
+    std::string constants;
+    if(argc > 1){
+    printf("%s %d",argv[1],argc);
+        constants = argv[1];
+    }else{
+        constants = "/home/calazans/Documents/projects/GeneticAlgorithmCPP/Constants.txt";
+    }
     try{
-        ConstMethods::initConstants("/home/calazans/Documents/projects/01/build/Constants.txt");
+
+        ConstMethods::initConstants(constants);
         GenesPool gp = GenesPool();
         gp.run();
         ConstMethods::terminateConstants();

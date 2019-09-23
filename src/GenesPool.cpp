@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <random>
 
-
 void GenesPool::tryMutate(Chromosome& chromosome){
     auto constants =  ConstMethods::getConstants();
     float mutationRate = constants->getMutation();
@@ -14,7 +13,22 @@ void GenesPool::tryMutate(Chromosome& chromosome){
         chromosome.mutation();
     }
 }
-
+template <class T>
+bool vectorSafeAdd(std::vector<T>& vector, const T& elem){
+    bool rValue = std::find(vector.begin(), vector.end(), elem) == vector.end();
+    if(rValue)
+    {
+        vector.push_back(elem);
+    }
+    return rValue;
+}
+void GenesPool::mutatetoAdd(std::vector<Chromosome>& vector,Chromosome& elem)
+{
+    while(std::find(vector.begin(), vector.end(), elem) != vector.end()){
+        elem.mutation();
+    }
+    vector.push_back(elem);
+}
 void GenesPool::run(){
     auto constants =  ConstMethods::getConstants();
     int numEpochsNotChanging = constants->getNumEpochsNotChanging();
@@ -30,97 +44,99 @@ void GenesPool::run(){
     Chromosome childB;
     int inter = 0;
     while(numInteractionsNotChanging < numEpochsNotChanging){
+      //  printf("%d\n",this->pool.size());
         std::vector<Chromosome> crossOverCandidates = selectGenes(numElems,this->pool);
-        std::vector<Chromosome> newPool;
+      //  printf("%d\n",crossOverCandidates.size());
+        std::vector<Chromosome> newPool = this->pool;
 
-        size_t pos = this->pool.size();
+        size_t size = crossOverCandidates.size();
 
-        for (size_t i = 0; i <pos; ++i) {
+        for (size_t i = 0; i < size; ++i) {
             Chromosome& fatherA = crossOverCandidates[i];
-            newPool.push_back(fatherA);
-            for (size_t j = i+1; j < crossOverCandidates.size(); ++j) {
+            for (size_t j = i+1; j < size; ++j) {
                 Chromosome& fatherB = crossOverCandidates[j];
-                newPool.push_back(fatherB);
                 performCrossover(childA,childB,fatherA,fatherB);
-                newPool.push_back(childA);
-                newPool.push_back(childB);
+                mutatetoAdd(newPool,childA);
+                mutatetoAdd(newPool,childB);
             }
         }
         std::vector<Chromosome> newElems = selectGenes(population,newPool);
+      //  printf("%d\n",newElems.size());
         this->pool.swap(newElems);
         float best = this->pool[0].getFitness();
         if(best > maxValue){
-            printf("in\n");
             best_genes = this->pool[0].getGenes();
             maxValue = best;
             numInteractionsNotChanging = 0;
         }else{
             numInteractionsNotChanging++;
         }
-        printf("%d -> %f %f\n",inter++,best,maxValue);
+        printf("%d -> %f %f | %d\n",inter++,best,maxValue,numEpochsNotChanging - numInteractionsNotChanging);
     }
-    printf("Fim -> %s %f",best_genes.c_str(),this->pool[0].getFitness());
+    printf("Fim -> %s %f",best_genes.c_str(),100/this->pool[0].getFitness());
 }
 
-std::vector<Chromosome> GenesPool::selectGenes(int numElements, std::vector<Chromosome> elems){
+std::vector<Chromosome> GenesPool::selectGenes(int numElements,std::vector<Chromosome>& elems){
     auto constants =  ConstMethods::getConstants();
     SelectionType selectionType = constants->getSelectionType();
     std::sort(elems.begin(), elems.end());
     std::vector<Chromosome> selectedElems;
     switch(selectionType){
-        case SELECTION_TYPE_STOCHASTIC:
-            for (int i = 0; i < numElements; ++i) {
-                selectedElems.push_back(elems[i]);
-            }
-            break;
-        case SELECTION_TYPE_TOURNAMENT:{
-            std::vector<Chromosome> candidates;
-            size_t divElems = elems.size()/numElements;
-            auto rng = std::default_random_engine{};
-            std::shuffle(std::begin(elems), std::end(elems), rng);
-            int pos;
-            for (int i = 0; i < numElements; ++i) {
-                for (int j = 0; j < divElems; ++j) {
-                    candidates.push_back(elems[i]);
-                }
-                std::sort(candidates.begin(), candidates.end());
-                selectedElems.push_back(candidates[0]);
-                candidates.clear();
-            }
-            break;
-        }
         case SELECTION_TYPE_ROULETTE:{
             std::vector<Chromosome> candidates;
+            std::vector<Chromosome> addedElements;
             size_t size = elems.size();
-            int max = 0;
+            float max = 0;
+            float random;
+            float chance = 0;
+            int addedValues = 0;
             for (int i = 0; i < size; ++i) {
-                max = elems[i].getFitness();
+                max += elems[i].getFitness();
             }
-            int random;
 
             auto rng = std::default_random_engine{};
             std::shuffle(std::begin(elems), std::end(elems), rng);
 
-            int chance = 0;
-            int pos;
-            int step = size /float(numElements);
-            for (int i = 0; candidates.size() == 0; ++i) {
+            for (int i = 0; addedValues < numElements; ++i) {
                 i = i % size;
+
                 chance =  elems[i].getFitness()/max;
                 random = (float)(rand()%100)/100;
-                if(random <= chance){
-                    pos = i;
-                    for (int j = 0; j < numElements; ++j) {
-                        candidates.push_back(elems[pos]);
-                        pos = (pos+step)%size;
-                    }
-                    break;
+                if(random <= chance && vectorSafeAdd(candidates,elems[i])){
+                        max -=  elems[i].getFitness();
+                        addedValues++;
                 }
             }
             selectedElems.swap(candidates);
             break;
         }
 
+        case SELECTION_TYPE_TOURNAMENT:{
+            std::vector<Chromosome> candidates;
+            int numElems = elems.size();
+            size_t divElems = std::max(int(numElems/(numElements)),2);
+            auto rng = std::default_random_engine{};
+            std::shuffle(std::begin(elems), std::end(elems), rng);
+            int pos = 0;
+            for (int i = 0; i < numElements; ++i) {
+                for (int j = 0; j < divElems && pos < numElems; ++j) {
+                    candidates.push_back(elems[pos]);
+                    pos++;
+                }
+                if(!candidates.empty())
+                {
+                    std::sort(candidates.begin(), candidates.end());
+                    selectedElems.push_back(candidates[0]);
+                    candidates= std::vector<Chromosome>();
+                }
+            }
+            break;
+        }
+        case SELECTION_TYPE_STOCHASTIC:
+            for (int i = 0; i < numElements; ++i) {
+                selectedElems.push_back(elems[i]);
+            }
+            break;
     }
     return selectedElems;
 }

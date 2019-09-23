@@ -47,5 +47,5 @@ float Fitness::calculateFitness(const std::vector<char>& values){
     pos = values[0];
     City& cityB = Fitness::allCities[pos];
     distance += equidianDistancie(cityA.getX(),cityB.getX(),cityA.getY(),cityB.getY());
-    return 100/float(distance);        
+    return 100/float(distance);
 }

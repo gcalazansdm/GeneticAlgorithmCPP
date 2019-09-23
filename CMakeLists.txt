@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(untitled)
+project(Genetic_Algorithm_TSP)
 
 enable_testing()
 
